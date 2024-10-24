@@ -1,15 +1,15 @@
-from fastapi import FastAPI, UploadFile, WebSocket
-from fastapi.middleware.cors import CORSMiddleware
-from rembg import remove
-import uvicorn
-import asyncio
-import json
 import base64
-from datetime import datetime
-from PIL import Image
 import io
 import logging
-from typing import Dict, Set
+from datetime import datetime
+from typing import Dict, Optional, Set
+
+import numpy as np
+import uvicorn
+from fastapi import FastAPI, UploadFile, WebSocket
+from fastapi.middleware.cors import CORSMiddleware
+from PIL import Image
+from rembg import remove
 
 # ロギングの設定
 logging.basicConfig(level=logging.INFO)
@@ -56,7 +56,7 @@ async def broadcast_image(image_data: bytes, metadata: Dict):
 
 
 @app.post("/upload/")
-async def upload_photo(image: UploadFile, description: str = None):
+async def upload_photo(image: UploadFile, description: Optional[str] = None):
     try:
         start_time = datetime.utcnow()
         content = await image.read()
@@ -64,7 +64,8 @@ async def upload_photo(image: UploadFile, description: str = None):
         output_image = remove(input_image)
 
         output_buffer = io.BytesIO()
-        output_image.save(output_buffer, format="PNG")
+        output_image_pil = Image.fromarray(np.array(output_image))
+        output_image_pil.save(output_buffer, format="PNG")
         processed_image_data = output_buffer.getvalue()
 
         processing_time = (datetime.utcnow() - start_time).total_seconds() * 1000

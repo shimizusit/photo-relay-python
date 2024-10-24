@@ -1,10 +1,10 @@
+import io
+import sys
+from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
-import io
-import sys
-import os
-from pathlib import Path
 
 # テスト対象のモジュールをインポートできるようにパスを追加
 src_path = Path(__file__).parent.parent / "src"
