@@ -20,7 +20,7 @@ app = FastAPI(title="Photo Relay Service")
 # CORSの設定
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 本番環境では適切なオリジンに制限すべき
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -37,14 +37,12 @@ async def broadcast_image(image_data: bytes, metadata: Dict):
         logger.warning("No connected clients to broadcast to")
         return
 
-    # base64エンコードされた画像データを含むメッセージを作成
     message = {
         "imageData": base64.b64encode(image_data).decode('utf-8'),
         "timestamp": datetime.utcnow().isoformat(),
         "metadata": metadata
     }
     
-    # 全クライアントにメッセージを送信
     disconnected_clients = set()
     for client in connected_clients:
         try:
@@ -53,40 +51,28 @@ async def broadcast_image(image_data: bytes, metadata: Dict):
             logger.error(f"Failed to send to client: {e}")
             disconnected_clients.add(client)
     
-    # 切断されたクライアントを除去
     connected_clients.difference_update(disconnected_clients)
 
 @app.post("/upload/")
 async def upload_photo(image: UploadFile, description: str = None):
-    """
-    画像をアップロードし、背景を除去して、WebSocketクライアントにブロードキャストする
-    """
     try:
         start_time = datetime.utcnow()
-        
-        # 画像を読み込み
         content = await image.read()
         input_image = Image.open(io.BytesIO(content))
-        
-        # 背景除去を実行
         output_image = remove(input_image)
         
-        # 処理済み画像をバイトストリームに変換
         output_buffer = io.BytesIO()
         output_image.save(output_buffer, format='PNG')
         processed_image_data = output_buffer.getvalue()
         
-        # 処理時間を計算
         processing_time = (datetime.utcnow() - start_time).total_seconds() * 1000
         
-        # メタデータを作成
         metadata = {
             "description": description,
             "processingTime": processing_time,
             "originalFilename": image.filename
         }
         
-        # 処理済み画像をブロードキャスト
         await broadcast_image(processed_image_data, metadata)
         
         return {
@@ -104,16 +90,12 @@ async def upload_photo(image: UploadFile, description: str = None):
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    """
-    WebSocket接続を処理する
-    """
     await websocket.accept()
     connected_clients.add(websocket)
     logger.info(f"New client connected. Total clients: {len(connected_clients)}")
     
     try:
         while True:
-            # クライアントとの接続を維持
             await websocket.receive_text()
     except Exception as e:
         logger.error(f"WebSocket connection error: {e}")

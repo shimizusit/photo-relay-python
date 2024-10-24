@@ -9,3 +9,29 @@ dependencies = [
     "pytest>=8.3.3",
     "rembg>=2.0.59",
 ]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q"
+testpaths = [
+    "tests",
+]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+[tool.coverage.run]
+source = ["src/photo_relay"]
+omit = [
+    "tests/*",
+    "**/__init__.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+]
