@@ -9,13 +9,38 @@
 - WebSocketによるリアルタイム画像配信
 - マルチクライアントサポート
 - エラーハンドリングとロギング
+- 包括的なテストスイート
+
+## プロジェクト構成
+
+```
+photo-relay-python/
+├── .vscode/                # VSCode設定
+│   ├── settings.json      # エディタ設定
+│   ├── launch.json        # デバッグ設定
+│   ├── tasks.json         # タスク設定
+│   └── extensions.json    # 推奨拡張機能
+├── src/
+│   └── photo_relay/       # メインのパッケージ
+│       ├── __init__.py
+│       └── main.py        # アプリケーションコード
+├── tests/                 # テストコード
+│   ├── __init__.py
+│   ├── conftest.py       # テスト共通設定
+│   └── test_upload.py    # アップロード機能のテスト
+├── docs/                  # ドキュメント
+├── requirements.txt       # 本番用依存パッケージ
+├── requirements-dev.txt   # 開発用依存パッケージ
+└── pyproject.toml        # プロジェクト設定
+```
 
 ## システム要件
 
 - Python 3.9以上
 - pip（Pythonパッケージマネージャー）
+- VSCode（推奨エディタ）
 
-## インストール
+## 開発環境のセットアップ
 
 1. リポジトリのクローン:
 ```bash
@@ -33,32 +58,95 @@ source venv/bin/activate  # Linux/Mac
 
 3. 依存パッケージのインストール:
 ```bash
-pip install -r requirements.txt
+# 開発用パッケージを含む全ての依存関係をインストール
+pip install -r requirements-dev.txt
 ```
 
-## 設定
+4. VSCode拡張機能のインストール:
+- VSCodeを開く
+- 推奨拡張機能タブを開く（Ctrl+Shift+X）
+- 表示される推奨拡張機能をインストール
 
-環境変数でサービスの動作をカスタマイズできます：
+## VSCode開発環境
 
+### 設定済み機能
+
+- Pythonインタープリターの自動設定
+- コードフォーマット（Black）の自動適用
+- Flake8によるリンティング
+- Pytestによるテスト実行
+- デバッグ設定
+- タスクランナー
+
+### 利用可能なタスク
+
+VSCodeで`Cmd/Ctrl + Shift + P`を押して"Tasks: Run Task"を選択し、以下のタスクを実行できます：
+
+- `Run Tests`: テストを実行しカバレッジレポートを生成
+- `Format Code`: Blackでコードをフォーマット
+- `Lint Code`: Flake8でコードをチェック
+- `Type Check`: mypyで型チェック
+- `Run Development Server`: 開発サーバーを起動
+
+### デバッグ設定
+
+`F5`キーで以下のデバッグ設定を選択できます：
+
+- `Python: FastAPI`: FastAPIアプリケーションの実行
+- `Python: Current File`: 現在開いているファイルの実行
+- `Python: Debug Tests`: テストのデバッグ実行
+
+## テスト
+
+### テストの実行
+
+基本的なテスト実行:
 ```bash
-# 必須の環境変数
-export CORS_ORIGINS="http://localhost:3000,http://example.com"  # CORSで許可するオリジン
-
-# オプションの環境変数
-export LOG_LEVEL="INFO"  # ログレベル（DEBUG, INFO, WARNING, ERROR）
-export MAX_UPLOAD_SIZE="10"  # アップロード可能な最大ファイルサイズ（MB）
+pytest
 ```
 
-## 起動方法
-
-開発モード:
+カバレッジレポート付きでテストを実行:
 ```bash
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+pytest --cov=src/photo_relay tests/
 ```
 
-本番モード:
+詳細なテスト結果を表示:
 ```bash
-uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
+pytest -v
+```
+
+特定のテストファイルのみ実行:
+```bash
+pytest tests/test_upload.py
+```
+
+## 開発ワークフロー
+
+1. 新機能の開発:
+```bash
+git checkout -b feature/new-feature
+```
+
+2. コードの品質管理:
+```bash
+# コードフォーマット
+black .
+
+# 型チェック
+mypy src/
+
+# リンター
+flake8 src/ tests/
+```
+
+3. テストの実行:
+```bash
+pytest --cov=src/photo_relay tests/
+```
+
+4. 開発サーバーの起動:
+```bash
+uvicorn src.photo_relay.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ## API仕様
@@ -101,59 +189,41 @@ uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
 }
 ```
 
-## エラーハンドリング
+## 設定
 
-サービスは以下の場合にエラーレスポンスを返します：
-
-- 無効なファイル形式
-- ファイルサイズ超過
-- 画像処理エラー
-- WebSocket接続エラー
-
-エラーレスポンス例:
-```json
-{
-    "status": "error",
-    "message": "エラーの詳細メッセージ"
-}
-```
-
-## ログ
-
-ログは標準出力に出力され、以下の情報が含まれます：
-
-- クライアントの接続/切断
-- 画像処理の開始/完了
-- エラーと例外
-- パフォーマンスメトリクス
-
-## モニタリング
-
-サービスの状態は以下のメトリクスで監視できます：
-
-- アクティブなWebSocket接続数
-- 画像処理時間
-- エラーレート
-- メモリ使用量
-
-## 開発者向け情報
-
-### コードスタイル
-
-このプロジェクトは[PEP 8](https://www.python.org/dev/peps/pep-0008/)に従っています。コードのフォーマットには`black`を使用してください：
+環境変数による設定:
 
 ```bash
-black .
+# 必須の環境変数
+export CORS_ORIGINS="http://localhost:3000,http://example.com"
+
+# オプションの環境変数
+export LOG_LEVEL="INFO"
+export MAX_UPLOAD_SIZE="10"
+export WS_MAX_CONNECTIONS="100"
+export PROCESSING_TIMEOUT="30"
 ```
 
-### テスト
+## トラブルシューティング
 
-テストの実行:
-```bash
-pytest tests/
-```
+### よくある問題と解決方法
 
-### 貢献
+1. VSCode関連:
+   - Pythonインタープリターが見つからない → コマンドパレットから"Python: Select Interpreter"を実行
+   - 拡張機能の競合 → 推奨されていない類似の拡張機能を無効化
+   - デバッグが開始されない → launch.jsonの設定を確認
+
+2. 開発環境:
+   - 依存関係のエラー → `pip install -r requirements-dev.txt`を再実行
+   - テストが見つからない → プロジェクト構造とpyproject.tomlを確認
+   - フォーマットが適用されない → VSCodeの設定でBlackが有効になっているか確認
+
+3. アプリケーション:
+   - WebSocket接続エラー → CORS設定とポート番号を確認
+   - 画像処理エラー → 入力画像のフォーマットとサイズを確認
+   - パフォーマンス問題 → ワーカー数とメモリ使用量を確認
+
+## 貢献
 
 1. このリポジトリをフォーク
 2. 機能ブランチを作成 (`git checkout -b feature/amazing-feature`)
@@ -161,10 +231,19 @@ pytest tests/
 4. ブランチをプッシュ (`git push origin feature/amazing-feature`)
 5. プルリクエストを作成
 
+### コーディング規約
+
+- [PEP 8](https://www.python.org/dev/peps/pep-0008/)に準拠
+- 最大行長: 100文字
+- ドキュメント文字列: Google形式
+- 型ヒント: 必須
+
 ## ライセンス
 
 [MITライセンス](LICENSE)
 
 ## サポート
 
-問題や質問がある場合は、GitHubのIssueを作成してください。
+- GitHubのIssueで問題を報告
+- プルリクエストで改善を提案
+- セキュリティ脆弱性の報告は security@example.com へ
