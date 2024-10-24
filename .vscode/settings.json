@@ -60,5 +60,9 @@
     // FastAPI特有の設定
     "yaml.schemas": {
         "https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.0/schema.json": "openapi.yaml"
-    }
+    },
+    "flake8.args": [
+        "--max-line-length=100",
+        "--extend-ignore=E203"
+    ]
 }
